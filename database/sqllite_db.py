@@ -14,7 +14,7 @@ def sql_start():
     base.execute("""
         CREATE TABLE IF NOT EXISTS users(
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-            user_id INTEGER,
+            user_id INTEGER UNIQE,
             first_name TEXT,
             last_name TEXT,
             telegram_name TEXT
@@ -75,18 +75,22 @@ async def sql_add_to_cart(user_id, product_name):
 async def sql_get_cart(user_id):
 
     total_sum = 0
-    user_goods = cursor.execute(f'SELECT * FROM user_goods JOIN goods ON user_goods.id = goods.id WHERE user_id={user_id}').fetchall()
-    for good in user_goods:
-        if (good[3] == 0):
+    result_str = []
+    # user_goods = cursor.execute(f'SELECT * FROM user_goods JOIN goods ON user_goods.id = goods.id WHERE user_id={user_id}').fetchall()
+    user_goods = cursor.execute(f'SELECT * FROM user_goods WHERE user_id = {user_id}').fetchall()
+
+    for user_good in user_goods:
+        if user_good[3] == 0:
             continue
-        total_sum = total_sum + (int(good[3]) * int(good[8]))
-        await bot.send_message(str(user_id), f'Наиенование: {good[6]}\n Количество: {str(good[3])} \n Цена за ед: {good[8]} рублей \n')
+        good_param  = cursor.execute(f'SELECT * FROM goods WHERE id= {user_good[2]}').fetchall()
+        total_sum = total_sum + (int(user_good[3]) * int(good_param[0][4]))
+        result_str.append(f'Наиенование: {good_param[0][2]}\n Количество: {str(user_good[3])} \n Цена за ед: {good_param[0][4]} рублей \n\n')
 
     if not total_sum == 0:
+        await bot.send_message(str(user_id), ''.join(result_str))
         await bot.send_message(str(user_id), f'Всего к оплате {total_sum} рублей \n', reply_markup=pay_keybord)
     else:
         await bot.send_message(str(user_id), f'Ваша корзина пуста')
-    
 
     
 async def sql_clear_cart(user_id):
