@@ -19,6 +19,6 @@ cart_btn = InlineKeyboardButton(text='коризна', callback_data='корзи
 client_tel_btn = KeyboardButton('поделиться номером ', request_contact=True)
 client_home_btn = KeyboardButton('поделиться локацией ', request_location=True)
 
-pay_keybord.add(pay_online, pay_offline, clear_cart)
+pay_keybord.row(pay_online, pay_offline, clear_cart)
 order_keybord.add(to_cart_btn, cart_btn)
 keyboard_client.row(work_time_btn, workplace_btn, menu_btn).add(client_home_btn, client_tel_btn)
