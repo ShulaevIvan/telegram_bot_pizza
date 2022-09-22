@@ -1,6 +1,6 @@
 import sqlite3 as sq
 from create_bot import bot
-from keybords.client_kb import order_keybord, pay_keybord
+from keyboards.client_kb import order_keybord, pay_keybord
 
 def sql_start():
     global base, cursor
@@ -76,7 +76,6 @@ async def sql_get_cart(user_id):
 
     total_sum = 0
     result_str = []
-    # user_goods = cursor.execute(f'SELECT * FROM user_goods JOIN goods ON user_goods.id = goods.id WHERE user_id={user_id}').fetchall()
     user_goods = cursor.execute(f'SELECT * FROM user_goods WHERE user_id = {user_id}').fetchall()
 
     for user_good in user_goods:
@@ -87,8 +86,7 @@ async def sql_get_cart(user_id):
         result_str.append(f'Наиенование: {good_param[0][2]}\n Количество: {str(user_good[3])} \n Цена за ед: {good_param[0][4]} рублей \n\n')
 
     if not total_sum == 0:
-        await bot.send_message(str(user_id), ''.join(result_str))
-        await bot.send_message(str(user_id), f'Всего к оплате {total_sum} рублей \n', reply_markup=pay_keybord)
+        await bot.send_message(str(user_id), ''.join(result_str)+f'\n Всего к оплате {total_sum} рублей', reply_markup=pay_keybord)
     else:
         await bot.send_message(str(user_id), f'Ваша корзина пуста')
 

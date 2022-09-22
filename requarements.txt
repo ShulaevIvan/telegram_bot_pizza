@@ -1,0 +1,6 @@
+aiogram
+sqlite3
+smtplib
+re
+email
+os

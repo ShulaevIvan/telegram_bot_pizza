@@ -1,11 +1,13 @@
+import smtplib
+import re
 from create_bot import bot, dp
 from aiogram import types, Dispatcher
 from database import sqllite_db
-from keybords.client_kb import keyboard_client
+from keyboards.client_kb import keyboard_client
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import ContentType
 from email.mime.text import MIMEText
-import smtplib
 
 
 class FSMClient(StatesGroup):
@@ -16,7 +18,7 @@ class FSMClient(StatesGroup):
 
 async def send_email(data):
 
-    SMTPSRV = 'smtp.timeweb.ru'
+    SMTPSRV = ''
     PORT = 25
     LOGIN = ''
     PASSWORD = ''
@@ -68,8 +70,6 @@ async def clear_cart(callback: types.Message):
     await sqllite_db.sql_clear_cart(user_id)
     await callback.answer(text='корзина очищена', show_alert=True)
 
-
-
 async def pay_offline(callback: types.CallbackQuery, state: FSMContext):
 
     order_obj = dict()
@@ -83,22 +83,27 @@ async def pay_offline(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(data=order_obj)
     await FSMClient.request_phone_number.set()
     
-    await bot.send_message(user_id,  text='введите телефон длядоставки')
+    await bot.send_message(user_id,  text='введите телефон для доставки')
 
 
 async  def get_client_phone(message: types.Message, state: FSMContext):
 
+    pattern = '^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$'
     phone = message.text
     user_id = message.from_user.id
-    order_obj = {}
-    async with state.proxy() as data:
-        data['phone'] =  phone
-        order_obj = data
+    if re.match(pattern, phone):
+        order_obj = {}
+        async with state.proxy() as data:
+            data['phone'] =  phone
+            order_obj = data
     
-    await state.update_data(data=order_obj)
-    await FSMClient.request_address.set()
+        await state.update_data(data=order_obj)
+        await FSMClient.request_address.set()
 
-    await bot.send_message(user_id,  text='введите адрес доставки')
+        await bot.send_message(user_id,  text='введите адрес доставки')
+    else:
+        await bot.send_message(user_id,  text='введите телефон для доставки')
+
 
 async def get_client_address(message: types.Message, state: FSMContext):
     address = message.text
@@ -115,8 +120,17 @@ async def get_client_address(message: types.Message, state: FSMContext):
     await bot.send_message(user_id,  text='вам перезвонят для уточнения заказа')
     await state.finish()
 
+async def get_obj_address(message: types.Message):
+    await bot.send_message(message.from_user.id, f'Наш адрес г. Тест, улица Тест, вход', reply_markup=keyboard_client)
+
+async def get_obj_time(message: types.Message):
+    await bot.send_message(message.from_user.id, f'Режим работы с 10:00 до 22:00', reply_markup=keyboard_client)
+
+
 def register_handlers_client(dp: Dispatcher):
     dp.register_message_handler(commands_start, commands=['start', 'help'])
+    dp.register_message_handler(get_obj_address, commands=['адрес_ресторана'])
+    dp.register_message_handler(get_obj_time, commands=['время_работы'])
     dp.register_message_handler(get_menu, commands=['меню'])
     dp.register_callback_query_handler(to_cart, text='в корзину')
     dp.register_callback_query_handler(cart, text='корзина')

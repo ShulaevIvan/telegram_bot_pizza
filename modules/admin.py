@@ -1,5 +1,5 @@
 from create_bot import  bot
-from  keybords import admin_kb
+from keyboards import admin_kb
 from aiogram import  types, Dispatcher
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
